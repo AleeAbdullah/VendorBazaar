@@ -61,6 +61,7 @@ export default function HomeStackLayout() {
         name="seller/[sellerId]"
         options={{
           animation: "slide_from_right",
+          headerShown: false,
         }}
       />
     </Stack>

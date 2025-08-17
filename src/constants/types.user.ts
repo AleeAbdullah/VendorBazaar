@@ -11,12 +11,15 @@ export interface AppUser extends User {
   likedProductIds: string[];
   FollowingSellersIds: string[];
 
+  isBanned?: boolean;
   pushToken?: string;
 }
 
 export interface Address {
   nickname: string;
   fullAddress: string;
+  latitude: number;
+  longitude: number;
   isDefault: boolean;
 }
 

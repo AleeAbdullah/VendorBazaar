@@ -36,6 +36,7 @@ import { AppUser } from "../constants/types.user";
 import { Alert } from "react-native";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { convertTimestampToDate } from "../helpers/formatDate";
+import { useToast } from "./ToastContext";
 
 interface AuthContextType {
   user: AppUser | null;
@@ -57,7 +58,13 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   updateInitialUserProfile: (
     gender: string,
-    address: { nickname: string; fullAddress: string; isDefault: boolean }[],
+    address: {
+      nickname: string;
+      fullAddress: string;
+      latitude: number;
+      longitude: number;
+      isDefault: boolean;
+    }[],
     dob: Date | null
   ) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -75,6 +82,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [FollowingLoading, setFollowingLoading] = useState<boolean>(false);
 
   const [initialAuthLoading, setInitialAuthLoading] = useState<boolean>(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -100,6 +108,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           if (userDocSnap.exists()) {
             // User document exists, merge data
             const userData = userDocSnap.data();
+
+            // Check if the user is banned
+            if (userData.isBanned) {
+              console.warn("User is banned. Signing out...");
+              showToast("Your account has been banned.", "error");
+              await firebaseSignOut(auth);
+              setAppUser(null);
+            }
             setAppUser({
               ...firebaseUser,
               fullName: userData.fullName,
@@ -365,7 +381,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const updateInitialUserProfile = async (
     gender: string,
-    address: { nickname: string; fullAddress: string; isDefault: boolean }[],
+    address: {
+      nickname: string;
+      fullAddress: string;
+      latitude: number;
+      longitude: number;
+      isDefault: boolean;
+    }[],
     dob: Date | null
   ) => {
     if (!appUser) {

@@ -6,7 +6,7 @@ import { useMessaging } from "../context/MessagingContext";
 import { useTheme } from "../context/ThemeContext";
 import { darkColors, lightColors } from "../constants/Colors";
 
-const MessagesIcon = () => {
+const MessagesIcon = ({ color }: { color?: string }) => {
   const router = useRouter();
   // Use the context to get the live unread count
   const { unreadCount } = useMessaging();
@@ -28,7 +28,11 @@ const MessagesIcon = () => {
       <Ionicons
         name="chatbubble-ellipses-outline"
         size={28}
-        color={effectiveTheme === "dark" ? darkColors.text : lightColors.text}
+        color={
+          color || effectiveTheme === "dark"
+            ? darkColors.text
+            : lightColors.text
+        }
       />
       {unreadCount > 0 && (
         <View className="absolute -bottom-0 -right-0 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center border-2 border-white">

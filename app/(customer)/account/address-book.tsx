@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -23,12 +24,10 @@ import { darkColors, lightColors } from "@/src/constants/Colors";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { Address } from "@/src/constants/types.user";
+import MapView, { Marker, PROVIDER_GOOGLE, Region } from "react-native-maps";
+import * as Location from "expo-location";
 
-interface AddressFormData {
-  nickname: string;
-  fullAddress: string;
-  isDefault: boolean;
-}
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -36,14 +35,27 @@ export default function AddressBookScreen() {
   const router = useRouter();
   const { user, ReFetchUser } = useAuth();
   const { effectiveTheme } = useTheme();
+  const colors = effectiveTheme === "dark" ? darkColors : lightColors;
   const [addresses, setAddresses] = useState<Address[]>(user?.address || []);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [formData, setFormData] = useState<AddressFormData>({
+  const [formData, setFormData] = useState<Address>({
     nickname: "",
     fullAddress: "",
+    latitude: 0,
+    longitude: 0,
     isDefault: false,
+  });
+
+  const mapRef = useRef<MapView>(null);
+
+  const [locating, setLocating] = useState(false);
+  const [region, setRegion] = useState<Region>({
+    latitude: -26.2041,
+    longitude: 28.0473,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
   });
 
   // Animation values
@@ -78,17 +90,104 @@ export default function AddressBookScreen() {
     ]).start();
   }, []);
 
+  const getCurrentLocation = async () => {
+    setLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Location Permission",
+          "Please enable location services to automatically detect your location."
+        );
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      const newRegion = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      };
+
+      setRegion(newRegion);
+      setFormData((prevData) => ({
+        ...prevData,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      }));
+
+      // Animate to current location
+      mapRef.current?.animateToRegion(newRegion, 1000);
+
+      // Get address from coordinates
+      await reverseGeocode(location.coords.latitude, location.coords.longitude);
+    } catch (error) {
+      console.error("Error getting location:", error);
+    } finally {
+      setLocating(false);
+    }
+  };
+
+  const reverseGeocode = async (latitude: number, longitude: number) => {
+    try {
+      const [result] = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
+
+      if (result) {
+        const address = [
+          result.streetNumber,
+          result.street,
+          result.district,
+          result.city,
+          result.region,
+          result.postalCode,
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+        setFormData((prevData) => ({
+          ...prevData,
+          fullAddress: address,
+        }));
+      }
+    } catch (error) {
+      console.error("Error reverse geocoding:", error);
+    }
+  };
+
   const openModal = (index?: number) => {
     if (index !== undefined) {
       setEditingIndex(index);
-      setFormData(addresses[index]);
+      const addressToEdit = addresses[index];
+      setFormData(addressToEdit);
+
+      const savedRegion = {
+        latitude: addressToEdit.latitude,
+        longitude: addressToEdit.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      };
+      setRegion(savedRegion);
+
+      setTimeout(() => {
+        mapRef.current?.animateToRegion(savedRegion, 1000);
+      }, 500);
     } else {
       setEditingIndex(null);
       setFormData({
         nickname: "",
         fullAddress: "",
         isDefault: addresses.length === 0,
+        latitude: 0,
+        longitude: 0,
       });
+      getCurrentLocation();
     }
     setModalVisible(true);
 
@@ -127,6 +226,8 @@ export default function AddressBookScreen() {
       setFormData({
         nickname: "",
         fullAddress: "",
+        latitude: 0,
+        longitude: 0,
         isDefault: false,
       });
     });
@@ -141,8 +242,18 @@ export default function AddressBookScreen() {
   };
 
   const saveAddress = async () => {
-    if (!formData.nickname.trim() || !formData.fullAddress.trim()) {
-      Alert.alert("Error", "Please fill in all fields");
+    if (!formData.latitude || !formData.longitude) {
+      Alert.alert("Error", "Please select a location on the map");
+      return;
+    }
+
+    if (!formData.nickname.trim()) {
+      Alert.alert("Error", "Please enter a nickname for this address");
+      return;
+    }
+
+    if (!formData.fullAddress.trim()) {
+      Alert.alert("Error", "Please enter the full address");
       return;
     }
 
@@ -188,6 +299,16 @@ export default function AddressBookScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMapPress = async (event: any) => {
+    const { coordinate } = event.nativeEvent;
+    setFormData((prev) => ({
+      ...prev,
+      latitude: coordinate.latitude,
+      longitude: coordinate.longitude,
+    }));
+    await reverseGeocode(coordinate.latitude, coordinate.longitude);
   };
 
   const deleteAddress = (index: number) => {
@@ -520,14 +641,15 @@ export default function AddressBookScreen() {
                       ? darkColors.background
                       : lightColors.background,
                   transform: [{ translateY: modalSlideAnim }],
-                  maxHeight: "80%",
+                  maxHeight: "85%",
                 }}
+                onStartShouldSetResponder={() => true}
               >
                 <Pressable>
                   {/* Modal Header */}
                   <View className="flex-row justify-between items-center mb-6">
                     <Text
-                      className="text-xl font-semibold"
+                      className="text-large font-semibold"
                       style={{
                         color:
                           effectiveTheme === "dark"
@@ -550,6 +672,73 @@ export default function AddressBookScreen() {
                         }
                       />
                     </TouchableOpacity>
+                  </View>
+
+                  {/* map */}
+                  <View
+                    style={{
+                      height: SCREEN_HEIGHT * 0.35,
+                      marginBottom: 10,
+                      borderRadius: 10,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <MapView
+                      ref={mapRef}
+                      provider={PROVIDER_GOOGLE}
+                      style={{ flex: 1 }}
+                      region={region}
+                      onRegionChangeComplete={setRegion}
+                      onPress={handleMapPress}
+                      showsUserLocation
+                      showsMyLocationButton={false}
+                    >
+                      {formData.latitude && formData.longitude && (
+                        <Marker
+                          coordinate={{
+                            latitude: formData.latitude,
+                            longitude: formData.longitude,
+                          }}
+                          draggable
+                          onDragEnd={(e) => {
+                            const coord = e.nativeEvent.coordinate;
+                            setFormData((prev) => ({
+                              ...prev,
+                              latitude: coord.latitude,
+                              longitude: coord.longitude,
+                            }));
+                            reverseGeocode(coord.latitude, coord.longitude);
+                          }}
+                        >
+                          <View className="items-center">
+                            <View className="p-2 rounded-full">
+                              <Ionicons
+                                name="location"
+                                size={24}
+                                color={colors.accent}
+                              />
+                            </View>
+                          </View>
+                        </Marker>
+                      )}
+                    </MapView>
+
+                    {/* Map Instructions */}
+                    <View
+                      className="absolute bottom-2 left-2 right-2 p-3 rounded-lg"
+                      style={{
+                        backgroundColor:
+                          effectiveTheme === "dark" ? "#000000cc" : "#ffffffcc",
+                      }}
+                    >
+                      <Text
+                        className="text-sm text-center"
+                        style={{ color: colors.text }}
+                      >
+                        Tap on the map or drag the marker to select your
+                        delivery location
+                      </Text>
+                    </View>
                   </View>
 
                   {/* Form Fields */}

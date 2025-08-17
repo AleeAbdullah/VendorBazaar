@@ -80,7 +80,7 @@ export default function LoginScreen() {
         >
           <View className="justify-center px-6 py-5">
             <Text className="text-hero font-bold text-black mb-2 text-center font-display">
-              Vendor Bazaar
+              Safe Buy Africa
             </Text>
             <Text className="text-medium text-gray-500 mb-8 text-center font-sans">
               It's great to see you again.

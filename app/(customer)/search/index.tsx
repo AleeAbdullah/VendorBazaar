@@ -10,13 +10,19 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import { useSearch } from "@/src/context/SearchContext";
 import { Product } from "@/src/constants/types.product";
-import { Link, useRouter } from "expo-router";
+import { Link, Stack, useRouter } from "expo-router";
 import { useDebounce } from "use-debounce";
 import { useTheme } from "@/src/context/ThemeContext";
 import { darkColors, lightColors } from "@/src/constants/Colors";
+import MessagesIcon from "@/src/components/MessagesIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SearchResultItem = ({
   item,
@@ -163,6 +169,7 @@ export default function SearchScreen() {
   const router = useRouter();
 
   const { effectiveTheme } = useTheme();
+  const { top } = useSafeAreaInsets();
 
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
 
@@ -188,6 +195,59 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView className="flex-1">
+      <Stack.Screen
+        options={{
+          title: "Dashboard",
+
+          header: () => (
+            <View
+              className=" relative"
+              style={{
+                backgroundColor: "#557754",
+                height: top + 40,
+                marginBottom: 20,
+                zIndex: 10,
+              }}
+            >
+              <View
+                className="flex-row items-center justify-between"
+                style={{
+                  paddingTop: top,
+                  paddingInline: 16,
+                  paddingBottom: 36,
+                  zIndex: 1000,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontFamily: "MuseoModerno_SemiBold",
+                    fontSize: 28,
+                    height: 36,
+                    zIndex: 100,
+                  }}
+                >
+                  Search Products
+                </Text>
+                <MessagesIcon color="white" />
+              </View>
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: -20,
+                  height: 30,
+                  width: "100%",
+                  backgroundColor: "#557754",
+                  flexDirection: "row",
+                  borderRadius: 1000,
+                  zIndex: -10,
+                }}
+              />
+            </View>
+          ),
+        }}
+      />
+
       {/* Search Input */}
       <View className="flex-row items-center p-4 pt-2 gap-x-3">
         <View
@@ -245,6 +305,19 @@ export default function SearchScreen() {
         />
       ) : searchQuery.length > 0 && searchResults.length === 0 ? (
         <View className="flex-1 justify-center items-center p-5">
+          <View
+            className="m-3  "
+            style={{
+              backgroundColor:
+                effectiveTheme === "dark"
+                  ? darkColors.accent + "30"
+                  : lightColors.accent + "30",
+              padding: 20,
+              borderRadius: 50,
+            }}
+          >
+            <MaterialCommunityIcons name="cart-off" size={60} color="#557754" />
+          </View>
           <Text
             className=" font-MuseoModerno_SemiBold text-text"
             style={{
@@ -293,6 +366,19 @@ export default function SearchScreen() {
             />
           ) : (
             <View className="p-10 items-center">
+              <View
+                className="m-3  "
+                style={{
+                  backgroundColor:
+                    effectiveTheme === "dark"
+                      ? darkColors.accent + "30"
+                      : lightColors.accent + "30",
+                  padding: 20,
+                  borderRadius: 50,
+                }}
+              >
+                <MaterialIcons name="search-off" size={60} color="#557754" />
+              </View>
               <Text className="text-gray-500">No recent searches</Text>
             </View>
           )}

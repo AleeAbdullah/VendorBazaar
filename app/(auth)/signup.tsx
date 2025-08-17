@@ -28,6 +28,8 @@ export default function SignupScreen() {
   const { signUp, loading } = useAuth();
   const router = useRouter();
 
+  const { signInWithGoogle } = useAuth();
+
   const handleSignup = async () => {
     if (!fullName.trim() || !email.trim() || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields.");
@@ -71,6 +73,15 @@ export default function SignupScreen() {
         }
       }
       Alert.alert("Signup Failed", errorMessage);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      // The context itself handles most errors, but you can add more here if needed
+      console.error("Google Sign-In button press error", error);
     }
   };
 
@@ -191,7 +202,12 @@ export default function SignupScreen() {
                 <View className="flex-1 h-px bg-gray-300" />
               </View>
 
-              <TouchableOpacity className="w-full h-12 rounded-lg justify-center items-center mb-4 flex-row bg-white border border-gray-300">
+              <TouchableOpacity
+                className="w-full h-12 rounded-lg justify-center items-center mb-4 flex-row bg-white border border-gray-300"
+                onPress={() => {
+                  handleGoogleSignIn();
+                }}
+              >
                 <Ionicons name="logo-google" size={22} className="mr-2.5" />
                 <Text className="text-gray-800 text-medium font-medium font-sans">
                   Sign Up with Google

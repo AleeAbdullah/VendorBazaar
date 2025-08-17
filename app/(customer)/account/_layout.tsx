@@ -59,12 +59,7 @@ export default function AccountStackLayout() {
       }}
       initialRouteName="index"
     >
-      <Stack.Screen
-        name="index"
-        options={{
-          title: "Account",
-        }}
-      />
+      <Stack.Screen name="index" />
       <Stack.Screen name="orders" options={{ title: "Orders" }} />
       <Stack.Screen name="details" options={{ title: "My Details" }} />
       <Stack.Screen name="address-book" options={{ title: "Address Book" }} />

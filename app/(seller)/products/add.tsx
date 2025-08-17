@@ -202,17 +202,23 @@ const CategoryInput = ({
       }
       setLoading(true);
       try {
-        const q = query(
-          collection(db, "categories"),
-          orderBy("name_lowercase"),
-          startAt(debouncedQuery.toLowerCase()),
-          endAt(debouncedQuery.toLowerCase() + "\uf8ff"),
-          limit(5)
-        );
-        const querySnapshot = await getDocs(q);
-        const fetchedCategories = querySnapshot.docs.map(
-          (doc) => doc.data().name
-        );
+        // Get the Categories document from the App collection
+        const categoriesDocRef = await getDocs(collection(db, "App"));
+        let fetchedCategories: string[] = [];
+
+        // Find the MetaData document and extract the categories array
+        categoriesDocRef.forEach((doc) => {
+          if (doc.id === "MetaData" && doc.data().Categories) {
+            // Filter categories that match the query
+            fetchedCategories = doc
+              .data()
+              .Categories.filter((category: string) =>
+                category.toLowerCase().includes(debouncedQuery.toLowerCase())
+              )
+              .slice(0, 5); // Limit to 5 results
+          }
+        });
+
         setSuggestions(fetchedCategories);
       } catch (error) {
         console.error("Error fetching category suggestions:", error);

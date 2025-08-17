@@ -28,6 +28,8 @@ import { mapSupabaseToProduct } from "@/src/helpers/helper";
 import { darkColors, lightColors } from "@/src/constants/Colors";
 import { useTheme } from "@/src/context/ThemeContext";
 import { ProductCardSkeleton } from "@/src/helpers/skeletons";
+import MessagesIcon from "@/src/components/MessagesIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // A component for each saved item in the list
 const SavedItemCard = ({
@@ -95,6 +97,7 @@ export default function SavedItemsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { effectiveTheme } = useTheme();
+  const { top } = useSafeAreaInsets();
 
   // Function to fetch products in chunks of 30 (Firestore 'in' query limit)
   const fetchSavedProducts = useCallback(async () => {
@@ -169,6 +172,58 @@ export default function SavedItemsScreen() {
 
   return (
     <View className="flex-1 ">
+      <Stack.Screen
+        options={{
+          title: "Dashboard",
+
+          header: () => (
+            <View
+              className=" relative"
+              style={{
+                backgroundColor: "#557754",
+                height: top + 40,
+                marginBottom: 20,
+                zIndex: 10,
+              }}
+            >
+              <View
+                className="flex-row items-center justify-between"
+                style={{
+                  paddingTop: top,
+                  paddingInline: 16,
+                  paddingBottom: 36,
+                  zIndex: 1000,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontFamily: "MuseoModerno_SemiBold",
+                    fontSize: 28,
+                    height: 36,
+                    zIndex: 100,
+                  }}
+                >
+                  Saved Items
+                </Text>
+                <MessagesIcon color="white" />
+              </View>
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: -20,
+                  height: 30,
+                  width: "100%",
+                  backgroundColor: "#557754",
+                  flexDirection: "row",
+                  borderRadius: 1000,
+                  zIndex: -10,
+                }}
+              />
+            </View>
+          ),
+        }}
+      />
       <FlatList
         data={dataForList}
         numColumns={2}
@@ -184,8 +239,18 @@ export default function SavedItemsScreen() {
         contentContainerStyle={{ paddingTop: 10 }}
         ListEmptyComponent={
           <View className="flex-1 justify-center items-center mt-32 p-5">
-            <View className="p-5 bg-gray-200 rounded-full mb-4">
-              <Ionicons name="heart-outline" size={40} color="gray" />
+            <View
+              className="m-3  "
+              style={{
+                backgroundColor:
+                  effectiveTheme === "dark"
+                    ? darkColors.accent + "30"
+                    : lightColors.accent + "30",
+                padding: 20,
+                borderRadius: 50,
+              }}
+            >
+              <Ionicons name="heart-outline" size={60} color="#557754" />
             </View>
             <Text className="text-xl font-bold text-gray-700">
               No Saved Items!

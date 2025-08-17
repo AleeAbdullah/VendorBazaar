@@ -115,6 +115,7 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
           .from("products")
           .select("*")
           .order("created_at", { ascending: false })
+          .or("deleted.is.null,deleted.eq.false")
           .range(0, PRODUCTS_PER_PAGE - 1);
 
         if (selectedCategory !== "All" && selectedCategory !== "") {

@@ -17,6 +17,8 @@ import { Product } from "@/src/constants/types.product";
 import { StatusBar } from "expo-status-bar";
 import { darkColors, lightColors } from "@/src/constants/Colors";
 import { useTheme } from "@/src/context/ThemeContext";
+import MessagesIcon from "@/src/components/MessagesIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ProductListItem = ({
   item,
@@ -120,6 +122,8 @@ export default function SellerProductsScreen() {
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
+  const { top } = useSafeAreaInsets();
+
   const { effectiveTheme } = useTheme();
 
   const onRefresh = React.useCallback(async () => {
@@ -130,6 +134,58 @@ export default function SellerProductsScreen() {
 
   return (
     <SafeAreaView className="flex-1">
+      <Stack.Screen
+        options={{
+          title: "Dashboard",
+
+          header: () => (
+            <View
+              className=" relative"
+              style={{
+                backgroundColor: "#557754",
+                height: top + 40,
+                marginBottom: 20,
+                zIndex: 10,
+              }}
+            >
+              <View
+                className="flex-row items-center justify-between"
+                style={{
+                  paddingTop: top,
+                  paddingInline: 16,
+                  paddingBottom: 36,
+                  zIndex: 1000,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontFamily: "MuseoModerno_SemiBold",
+                    fontSize: 28,
+                    height: 36,
+                    zIndex: 100,
+                  }}
+                >
+                  Manage Orders
+                </Text>
+                <MessagesIcon color="white" />
+              </View>
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: -20,
+                  height: 30,
+                  width: "100%",
+                  backgroundColor: "#557754",
+                  flexDirection: "row",
+                  borderRadius: 1000,
+                  zIndex: -10,
+                }}
+              />
+            </View>
+          ),
+        }}
+      />
       {loading && products.length === 0 ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" />

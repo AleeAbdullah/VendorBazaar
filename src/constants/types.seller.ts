@@ -7,12 +7,16 @@ export interface Seller {
   bio?: string;
   memberSince: Timestamp;
   FollowersIds?: string[];
+  PhotoURL?: string;
+  fullName?: string;
 
   address?: {
     street: string;
     city: string;
     postalCode: string;
     province: string;
+    latitude: number;
+    longitude: number;
   };
 
   paystackAccountId: string;

@@ -1,5 +1,5 @@
 // app/(customer)/cart/index.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -21,106 +21,275 @@ import {
 import { ErrorState, ProductCardSkeleton } from "@/src/helpers/skeletons";
 import { useTheme } from "@/src/context/ThemeContext";
 import { darkColors, lightColors } from "@/src/constants/Colors";
+import { useProducts } from "@/src/context/ProductContext";
+import { supabase } from "@/src/lib/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
+import MessagesIcon from "@/src/components/MessagesIcon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const CartListItem = ({
-  item,
-  effectiveTheme,
-}: {
-  item: CartItem;
-  effectiveTheme: string;
-}) => {
-  const { updateQuantity, removeFromCart } = useCart();
-
-  return (
-    <View
-      className="flex-row items-center p-3 rounded-lg border mb-3 mx-4 shadow-md"
-      style={{
-        backgroundColor:
-          effectiveTheme === "dark" ? darkColors.input : lightColors.card,
-        borderColor:
-          effectiveTheme === "dark" ? darkColors.border : lightColors.border,
-        shadowColor: effectiveTheme === "dark" ? "#fff" : "#000",
-      }}
-    >
-      <Image
-        source={{ uri: item.imagesUrl?.[0] || "https://placehold.co/100x100" }}
-        className="w-20 h-20 rounded-md mr-4"
-      />
-      <View className="flex-1">
-        <Text
-          className="text-text font-MuseoModerno_SemiBold"
-          numberOfLines={1}
-          style={{
-            color:
-              effectiveTheme === "dark" ? darkColors.text : lightColors.text,
-          }}
-        >
-          {item.name}
-        </Text>
-        {item.selectedOptions && (
-          <Text
-            className="text-small font-MuseoModerno_Regular mb-1"
-            style={{
-              color:
-                effectiveTheme === "dark"
-                  ? darkColors.tertiaryText
-                  : lightColors.tertiaryText,
-            }}
-          >
-            {Object.values(item.selectedOptions || {})
-              .map((option) => option.name)
-              .join(", ") || "No options selected"}
-          </Text>
-        )}
-        <Text
-          className="text-text font-MuseoModerno_SemiBold"
-          style={{
-            color:
-              effectiveTheme === "dark" ? darkColors.text : lightColors.text,
-          }}
-        >
-          ${item.price.toFixed(2)}
-        </Text>
-      </View>
-      <View className="items-center">
-        <TouchableOpacity
-          onPress={() => removeFromCart(item.pid)}
-          className="self-end mb-2"
-        >
-          <Ionicons name="trash-bin-outline" size={20} color="red" />
-        </TouchableOpacity>
-        <View className="flex-row items-center bg-gray-100 rounded-full">
-          <TouchableOpacity
-            onPress={() => updateQuantity(item.pid, item.quantity - 1)}
-            className="p-2"
-          >
-            <Ionicons name="remove" size={18} />
-          </TouchableOpacity>
-          <Text className="px-3 text-base font-semibold">{item.quantity}</Text>
-          <TouchableOpacity
-            onPress={() => updateQuantity(item.pid, item.quantity + 1)}
-            className="p-2"
-          >
-            <Ionicons name="add" size={18} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-};
+interface ExtendedCartItem extends CartItem {
+  stock_quantity: number;
+}
 
 export default function CartScreen() {
-  const { cartItems, loading, error, cartSubtotal, initiatePayment, isPaying } =
-    useCart();
+  const {
+    cartItems,
+    loading,
+    error,
+    cartSubtotal,
+    initiatePayment,
+    isPaying,
+    SHIPPING_FEE,
+    updateQuantity,
+    removeFromCart,
+  } = useCart();
   const router = useRouter();
   const { effectiveTheme } = useTheme();
+  const { top } = useSafeAreaInsets();
 
-  const SHIPPING_FEE = 80.0;
+  const [products, setProducts] = useState<ExtendedCartItem[]>([]);
+  const [isDisabled, setIsDisabled] = useState(false);
+  const [stockErrors, setStockErrors] = useState<Record<string, string>>({});
+
+  const fetchProducts = async () => {
+    if (cartItems.length === 0) return;
+
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, stock_quantity")
+      .in(
+        "id",
+        cartItems.map((item) => item.pid)
+      );
+
+    if (error) {
+      console.error("Error fetching products:", error);
+      return;
+    }
+
+    const updatedProducts = cartItems.map((item) => {
+      const product = data?.find((p) => p.id === item.pid);
+      return {
+        ...item,
+        stock_quantity: product?.stock_quantity || 0,
+      };
+    });
+
+    // Check stock and automatically adjust quantities
+    const errors: Record<string, string> = {};
+    for (const product of updatedProducts) {
+      if (product.stock_quantity === 0) {
+        // Remove items with 0 stock
+        removeFromCart(product.pid);
+      } else if (product.quantity > product.stock_quantity) {
+        // Adjust quantity to available stock
+        updateQuantity(product.pid, product.stock_quantity);
+        errors[
+          product.pid
+        ] = `Quantity adjusted to available stock (${product.stock_quantity})`;
+      }
+    }
+
+    // Filter out removed items (0 stock)
+    const filteredProducts = updatedProducts.filter(
+      (p) => p.stock_quantity > 0
+    );
+    setProducts(filteredProducts);
+    setStockErrors(errors);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [cartItems]);
+
+  const CartListItem = ({
+    item,
+    effectiveTheme,
+  }: {
+    item: ExtendedCartItem;
+    effectiveTheme: string;
+  }) => {
+    const handleUpdateQuantity = async (newQuantity: number) => {
+      if (newQuantity > item.stock_quantity) {
+        await updateQuantity(item.pid, item.stock_quantity);
+        setStockErrors((prev) => ({
+          ...prev,
+          [item.pid]: `Only ${item.stock_quantity} items available in stock`,
+        }));
+        return;
+      }
+
+      // Clear error when quantity is valid
+      setStockErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[item.pid];
+        return newErrors;
+      });
+
+      await updateQuantity(item.pid, newQuantity);
+    };
+
+    return (
+      <View
+        className="flex-row items-center p-3 rounded-lg border mb-3 mx-4 shadow-md"
+        style={{
+          backgroundColor:
+            effectiveTheme === "dark" ? darkColors.input : lightColors.card,
+          borderColor:
+            effectiveTheme === "dark" ? darkColors.border : lightColors.border,
+          shadowColor: effectiveTheme === "dark" ? "#fff" : "#000",
+        }}
+      >
+        <Image
+          source={{
+            uri: item.imagesUrl?.[0] || "https://placehold.co/100x100",
+          }}
+          className="w-20 h-20 rounded-md mr-4"
+        />
+        <View className="flex-1">
+          <Text
+            className="text-text font-MuseoModerno_SemiBold"
+            numberOfLines={1}
+            style={{
+              color:
+                effectiveTheme === "dark" ? darkColors.text : lightColors.text,
+            }}
+          >
+            {item.name}
+          </Text>
+          {item.selectedOptions && (
+            <Text
+              className="text-small font-MuseoModerno_Regular mb-1"
+              style={{
+                color:
+                  effectiveTheme === "dark"
+                    ? darkColors.tertiaryText
+                    : lightColors.tertiaryText,
+              }}
+            >
+              {Object.values(item.selectedOptions || {})
+                .map((option) => option.name)
+                .join(", ") || "No options selected"}
+            </Text>
+          )}
+          <Text
+            className="text-text font-MuseoModerno_SemiBold"
+            style={{
+              color:
+                effectiveTheme === "dark" ? darkColors.text : lightColors.text,
+            }}
+          >
+            ${item.price.toFixed(2)}
+          </Text>
+        </View>
+        <View className="items-center">
+          <TouchableOpacity
+            onPress={() => removeFromCart(item.pid)}
+            className="self-end mb-2"
+          >
+            <Ionicons name="trash-bin-outline" size={20} color="red" />
+          </TouchableOpacity>
+          <View className="flex-row items-center bg-gray-100 rounded-full">
+            <TouchableOpacity
+              onPress={() => handleUpdateQuantity(item.quantity - 1)}
+              className="p-2"
+            >
+              <Ionicons name="remove" size={18} />
+            </TouchableOpacity>
+            <Text className="px-3 text-base font-semibold">
+              {item.quantity}
+            </Text>
+            <TouchableOpacity
+              onPress={() => handleUpdateQuantity(item.quantity + 1)}
+              className="p-2"
+            >
+              <Ionicons name="add" size={18} />
+            </TouchableOpacity>
+          </View>
+          {stockErrors[item.pid] && (
+            <Text className="text-xs text-red-500 mt-1 text-center max-w-20">
+              {stockErrors[item.pid]}
+            </Text>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  const handleCheckout = async () => {
+    // Refresh stock data before checkout
+    await fetchProducts();
+
+    // Check if any items have stock issues after refresh
+    const hasStockIssues = Object.keys(stockErrors).length > 0;
+    if (hasStockIssues) {
+      Alert.alert(
+        "Stock Issue",
+        "Please review your cart. Some items have been adjusted due to stock availability."
+      );
+      return;
+    }
+
+    router.push("/(customer)/cart/checkout");
+  };
+
   const VAT_RATE = 0.0;
   const total = cartSubtotal * (1 + VAT_RATE) + SHIPPING_FEE;
 
   return (
     <SafeAreaView className="flex-1 ">
+      <Stack.Screen
+        options={{
+          title: "Dashboard",
+
+          header: () => (
+            <View
+              className=" relative"
+              style={{
+                backgroundColor: "#557754",
+                height: top + 40,
+                marginBottom: 20,
+                zIndex: 10,
+              }}
+            >
+              <View
+                className="flex-row items-center justify-between"
+                style={{
+                  paddingTop: top,
+                  paddingInline: 16,
+                  paddingBottom: 36,
+                  zIndex: 1000,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontFamily: "MuseoModerno_SemiBold",
+                    fontSize: 28,
+                    height: 36,
+                    zIndex: 100,
+                  }}
+                >
+                  My Cart
+                </Text>
+                <MessagesIcon color="white" />
+              </View>
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: -20,
+                  height: 30,
+                  width: "100%",
+                  backgroundColor: "#557754",
+                  flexDirection: "row",
+                  borderRadius: 1000,
+                  zIndex: -10,
+                }}
+              />
+            </View>
+          ),
+        }}
+      />
       {loading ? (
         <View style={{ flex: 1 }}>
           <FlatList
@@ -141,7 +310,19 @@ export default function CartScreen() {
         />
       ) : cartItems.length === 0 ? (
         <View className="flex-1 justify-center items-center">
-          <Ionicons name="cart-outline" size={60} color="gray" />
+          <View
+            className="m-3  "
+            style={{
+              backgroundColor:
+                effectiveTheme === "dark"
+                  ? darkColors.accent + "30"
+                  : lightColors.accent + "30",
+              padding: 20,
+              borderRadius: 50,
+            }}
+          >
+            <Ionicons name="cart-outline" size={60} color="#557754" />
+          </View>
           <Text
             className="text-heading font-MuseoModerno_SemiBold mt-4"
             style={{
@@ -158,7 +339,7 @@ export default function CartScreen() {
       ) : (
         <View className="flex-1">
           <FlatList
-            data={cartItems}
+            data={products}
             renderItem={({ item }) => (
               <CartListItem item={item} effectiveTheme={effectiveTheme} />
             )}
@@ -291,11 +472,11 @@ export default function CartScreen() {
               style={{
                 backgroundColor:
                   effectiveTheme === "dark"
-                    ? darkColors.secondaryText
+                    ? darkColors.accent
                     : lightColors.accent,
                 opacity: isPaying ? 0.7 : 1, // Dim button when loading
               }}
-              onPress={() => router.push("/(customer)/cart/checkout")}
+              onPress={handleCheckout}
               disabled={isPaying} // Disable button when processing
             >
               {isPaying ? (
@@ -307,8 +488,8 @@ export default function CartScreen() {
                     style={{
                       color:
                         effectiveTheme === "dark"
-                          ? darkColors.background
-                          : lightColors.background,
+                          ? darkColors.text
+                          : darkColors.text,
                     }}
                   >
                     Go To Checkout
@@ -320,8 +501,8 @@ export default function CartScreen() {
                       marginLeft: 8,
                       color:
                         effectiveTheme === "dark"
-                          ? darkColors.background
-                          : lightColors.background,
+                          ? darkColors.text
+                          : darkColors.text,
                     }}
                   />
                 </>

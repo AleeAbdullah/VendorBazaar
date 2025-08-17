@@ -201,7 +201,7 @@ const ReviewCard = ({
         color: effectiveTheme === "dark" ? darkColors.text : lightColors.text,
       }}
     >
-      {review.text}
+      {review.reviewtText}
     </Text>
     <Text className="text-xs text-gray-400 mt-3 text-right">
       {new Date(review.createdAt.seconds * 1000).toLocaleDateString()}

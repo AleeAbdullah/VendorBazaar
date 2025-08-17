@@ -15,6 +15,8 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/src/context/AuthContext";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { db } from "@/src/lib/firebase";
 // You would also fetch the order details to get product/seller info if not passed via params
 // For now, we'll use placeholder data
 
@@ -43,9 +45,13 @@ const StarRating = ({
 );
 
 export default function LeaveReviewScreen() {
-  const { orderId } = useLocalSearchParams<{ orderId: string }>();
-  //   const { addReview } = useAuth();
+  const { orderId, productId, sellerId } = useLocalSearchParams<{
+    orderId: string;
+    productId: string;
+    sellerId: string;
+  }>();
   const router = useRouter();
+  const { user } = useAuth();
 
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -59,9 +65,22 @@ export default function LeaveReviewScreen() {
 
     setIsSubmitting(true);
     try {
-      // In a real app, you'd fetch the order to get productId and sellerId
-      // await addReview({ productId: '...', sellerId: '...', rating, text: reviewText, images: [] });
-      console.log({ orderId, rating, reviewText });
+      const reviewData = {
+        orderId,
+        createdAt: Timestamp.now(),
+        productId,
+        rating,
+        reviewText,
+        reported: false,
+        sellerId,
+        userId: user?.uid,
+        userName: user?.fullName,
+        userPhoto: user?.photoURL,
+      };
+
+      const reviewsRef = collection(db, "reviews");
+      await addDoc(reviewsRef, reviewData);
+
       Alert.alert("Success", "Your review has been submitted!");
       router.back();
     } catch (error) {

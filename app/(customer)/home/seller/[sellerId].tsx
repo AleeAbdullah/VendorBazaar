@@ -18,7 +18,7 @@ import {
   Link,
   router,
 } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { AntDesign, Entypo, Feather, Ionicons } from "@expo/vector-icons";
 import {
   doc,
   getDoc,
@@ -46,6 +46,8 @@ import { supabase } from "@/src/lib/supabase";
 import { mapSupabaseToProduct } from "@/src/helpers/helper";
 import { useTheme } from "@/src/context/ThemeContext";
 import { darkColors, lightColors } from "@/src/constants/Colors";
+import { StatusBar } from "expo-status-bar";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type ListItem =
   | (Product & { type: "product" })
@@ -190,7 +192,7 @@ const ReviewCard = ({
             : lightColors.secondaryText,
       }}
     >
-      {review.text}
+      {review.reviewtText}
     </Text>
     <Text className="text-xs text-gray-400 mt-3 text-right">
       {new Date(review.createdAt.seconds * 1000).toLocaleDateString()}
@@ -283,6 +285,7 @@ export default function SellerProfileScreen() {
   }));
 
   const { effectiveTheme } = useTheme();
+  const { top } = useSafeAreaInsets();
 
   const handleTabPress = (tabName: string, index: number) => {
     if (activeTab === tabName) return;
@@ -308,11 +311,27 @@ export default function SellerProfileScreen() {
       setLoadingProfile(true);
       try {
         const sellerRef = doc(db, "sellers", sellerId.trim());
+        const AellerAccRef = doc(db, "users", sellerId.trim());
         const docSnap = await getDoc(sellerRef);
+        const userDocSnap = await getDoc(AellerAccRef);
         if (docSnap.exists()) {
           setSeller({ sid: docSnap.id, ...docSnap.data() } as Seller);
           // Fetch initial products after seller profile is loaded
           fetchProductsCallback();
+        }
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          if (userData) {
+            setSeller((prev) => {
+              if (!prev) return null;
+              return {
+                ...prev,
+                photoURL: (userData.photoURL as string) || "",
+                fullName: userData.fullName || "",
+              } as Seller;
+            });
+          }
         }
       } catch (error) {
         console.error("Error fetching seller:", error);
@@ -422,228 +441,229 @@ export default function SellerProfileScreen() {
   }, [activeTab]);
 
   const renderHeader = () => (
-    <View className="">
-      <View className="w-full items-center mt-4">
-        {seller?.shopBannerUrl ? (
+    <View className="relative">
+      <View className="w-full items-center justify-center pt-4 bg-primary_secondary h-64">
+        <View className="mx-4 w-[90%] flex flex-row gap-3 items-center">
           <Image
-            source={{ uri: seller?.shopBannerUrl }}
-            className="w-[95%] h-40 rounded-lg"
-          />
-        ) : (
-          <View
-            className="w-[90%] h-40 rounded-lg items-center justify-center"
-            style={{
-              backgroundColor:
-                effectiveTheme === "dark"
-                  ? darkColors.card + "50"
-                  : lightColors.card + "50",
+            source={{
+              uri: seller?.PhotoURL || seller?.shopBannerUrl || "",
             }}
-          >
-            <Ionicons
-              name="storefront-outline"
-              size={50}
-              color={
-                effectiveTheme === "dark" ? darkColors.text : lightColors.text
-              }
-            />
+            style={{ width: 60, height: 60, borderRadius: 1000 }}
+          />
+
+          <View className=" flex flex-col gap-[2px]">
+            <View>
+              <Text
+                className="text-text font-Fredoka_Medium "
+                style={{
+                  color: "white",
+                }}
+              >
+                {seller?.fullName}
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-2">
+              <Entypo name="shop" size={18} color="#ffffff80" />
+
+              <Text
+                className="text-medium font-Fredoka_Medium "
+                style={{
+                  color: "#ffffff80",
+                }}
+              >
+                {seller?.shopName}
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-2">
+              <Entypo name="location-pin" size={18} color="#ffffff80" />
+
+              <Text
+                className="text-medium font-Fredoka_Medium "
+                style={{
+                  color: "#ffffff80",
+                }}
+              >
+                {seller?.address?.city + ", " + seller?.address?.province}
+              </Text>
+            </View>
           </View>
-        )}
+
+          <View className="flex flex-1">
+            <View className="flex flex-1 flex-col justify-center items-end gap-3">
+              <TouchableOpacity
+                className="p-2 rounded-full mr-2 flex flex-row items-center gap-3"
+                style={{
+                  backgroundColor:
+                    effectiveTheme === "dark"
+                      ? darkColors.card + "60"
+                      : lightColors.card + "60",
+                }}
+                onPress={() => {
+                  toggleFollowSeller(sellerId?.trim() || "");
+                }}
+                disabled={FollowingLoading}
+              >
+                <Ionicons
+                  name={
+                    !FollowingLoading
+                      ? user?.FollowingSellersIds.includes(sellerId || "")
+                        ? "heart"
+                        : "heart-outline"
+                      : user?.FollowingSellersIds.includes(sellerId || "")
+                      ? "heart-outline"
+                      : "heart"
+                  }
+                  size={20}
+                  color={
+                    user?.FollowingSellersIds.includes(sellerId || "")
+                      ? "#ef4444"
+                      : effectiveTheme === "dark"
+                      ? darkColors.text
+                      : darkColors.text
+                  }
+                />
+                {/* <Text
+                  className="text-medium text-center font-MuseoModerno_Medium "
+                  style={{
+                    color:
+                      effectiveTheme === "dark"
+                        ? darkColors.text
+                        : darkColors.text,
+                  }}
+                >
+                  {user?.FollowingSellersIds.includes(sellerId || "")
+                    ? "Unfollow"
+                    : "Follow"}
+                </Text> */}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="p-2 rounded-full flex flex-row items-center gap-3"
+                style={{
+                  backgroundColor:
+                    effectiveTheme === "dark"
+                      ? darkColors.card + "60"
+                      : lightColors.card + "60",
+                }}
+                onPress={() => {
+                  router.push({
+                    pathname: "/(messages)/chat",
+                    params: {
+                      recipientId: seller?.sid,
+                      recipientName: seller?.shopName,
+                    },
+                  });
+                }}
+              >
+                <Ionicons
+                  name="chatbubble-ellipses-outline"
+                  size={20}
+                  color={effectiveTheme === "dark" ? "#fff" : "#fff"}
+                />
+                <Text
+                  className="text-medium text-center font-MuseoModerno_Medium "
+                  style={{
+                    color:
+                      effectiveTheme === "dark"
+                        ? darkColors.text
+                        : darkColors.text,
+                  }}
+                >
+                  Message
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        <View className="flex-row justify-between mt-6 w-[90%]">
+          <View className="flex-row  space-x-6 ">
+            <View className="flex flex-row gap-3">
+              <AntDesign name="star" size={18} color="#fff220" />
+              <Text
+                className="text-lg font-MuseoModerno_SemiBold"
+                style={{
+                  color: "#fff220",
+                }}
+              >
+                {seller?.avgRating?.toFixed(1) || "0.0"}
+              </Text>
+            </View>
+            <View
+              style={{
+                width: 1,
+                backgroundColor: "#ffffff80",
+                marginInline: 10,
+              }}
+            />
+            <View className="flex flex-row gap-3">
+              <Text
+                className="text-lg font-MuseoModerno_SemiBold"
+                style={{
+                  color: "#ffffff80",
+                }}
+              >
+                {seller?.totalReviews || 0} Reviews
+              </Text>
+            </View>
+          </View>
+          <View>
+            <Text
+              className="text-lg font-MuseoModerno_SemiBold"
+              style={{
+                color: "#ffffff80",
+              }}
+            >
+              {seller?.totalFollowers || 0} Followers
+            </Text>
+          </View>
+        </View>
       </View>
 
       <View
-        className="justify-between items-center m-4 rounded-2xl py-4"
+        className=" absolute bottom-0 w-full rounded-t-3xl h-10"
         style={{
-          borderColor:
-            effectiveTheme === "dark" ? darkColors.border : lightColors.border,
           backgroundColor:
-            effectiveTheme === "dark" ? darkColors.card : lightColors.card,
-          elevation: 5,
-          shadowColor: effectiveTheme === "dark" ? "#ffffff50" : "#00000050",
+            effectiveTheme === "dark"
+              ? darkColors.background
+              : lightColors.background,
         }}
       >
-        <Text
-          className="text-2xl font-MuseoModerno_SemiBold mt-2"
-          style={{
-            color:
-              effectiveTheme === "dark" ? darkColors.text : lightColors.text,
-          }}
-        >
-          {seller?.shopName}
-        </Text>
-        <View className="flex-row items-stretch space-x-6 mt-4">
-          <View className="items-center">
-            <Text
-              className="font-MuseoModerno_SemiBold font-medium"
-              style={{
-                color:
-                  effectiveTheme === "dark"
-                    ? darkColors.text
-                    : lightColors.text,
-              }}
-            >
-              {seller?.totalFollowers || 0}
-            </Text>
-            <Text
-              className="text-gray-500 text-sm"
-              style={{
-                color:
-                  effectiveTheme === "dark"
-                    ? darkColors.secondaryText
-                    : lightColors.secondaryText,
-              }}
-            >
-              Followers
-            </Text>
+        <View className="">
+          <View className="flex-row">
+            {TABS.map((tab, index) => (
+              <TouchableOpacity
+                key={tab}
+                onPress={() => handleTabPress(tab, index)}
+                className="flex-1 items-center p-3"
+              >
+                <Text
+                  className={`font-bold text-base`}
+                  style={{
+                    color:
+                      activeTab === tab
+                        ? effectiveTheme === "dark"
+                          ? darkColors.text
+                          : lightColors.text
+                        : effectiveTheme === "dark"
+                        ? darkColors.tertiaryText
+                        : lightColors.tertiaryText,
+                  }}
+                >
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-          <View className="items-center mx-6">
-            <Text
-              className="font-bold"
-              style={{
-                color:
-                  effectiveTheme === "dark"
-                    ? darkColors.text
-                    : lightColors.text,
-              }}
-            >
-              {seller?.avgRating?.toFixed(1) || "0.0"}
-            </Text>
-            <Text
-              className="text-gray-500 text-sm"
-              style={{
-                color:
-                  effectiveTheme === "dark"
-                    ? darkColors.secondaryText
-                    : lightColors.secondaryText,
-              }}
-            >
-              Rating
-            </Text>
-          </View>
-          <View className="items-center">
-            <Text
-              className="font-bold"
-              style={{
-                color:
-                  effectiveTheme === "dark"
-                    ? darkColors.text
-                    : lightColors.text,
-              }}
-            >
-              {seller?.totalReviews || 0}
-            </Text>
-            <Text
-              className="text-gray-500 text-sm"
-              style={{
-                color:
-                  effectiveTheme === "dark"
-                    ? darkColors.secondaryText
-                    : lightColors.secondaryText,
-              }}
-            >
-              Reviews
-            </Text>
-          </View>
-        </View>
-        <View className="flex-row space-x-3 gap-x-6 mt-4 w-full px-4">
-          <TouchableOpacity
-            className="flex-1 p-3 rounded-lg"
-            style={{
-              backgroundColor:
-                effectiveTheme === "dark"
-                  ? darkColors.text
-                  : lightColors.accent,
-            }}
-            onPress={() => toggleFollowSeller(sellerId.trim())}
-            disabled={FollowingLoading}
-          >
-            <Text
-              className="text-white text-center font-bold"
-              style={{
-                color:
-                  effectiveTheme === "dark"
-                    ? darkColors.background
-                    : lightColors.background,
-              }}
-            >
-              {FollowingLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : user?.FollowingSellersIds.includes(sellerId) ? (
-                "Unfollow"
-              ) : (
-                "Follow"
-              )}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="flex-1 border border-gray-300 p-3 rounded-lg"
-            style={{
-              backgroundColor:
-                effectiveTheme === "dark"
-                  ? darkColors.text + "20"
-                  : lightColors.card,
-              borderColor:
-                effectiveTheme === "dark"
-                  ? darkColors.border
-                  : lightColors.border,
-            }}
-            onPress={() => {
-              router.push({
-                pathname: "/(messages)/chat",
-                params: {
-                  recipientId: seller?.sid,
-                  recipientName: seller?.shopName,
-                },
-              });
-            }}
-          >
-            <Text
-              className=" text-center font-bold"
-              style={{
-                color:
-                  effectiveTheme === "dark"
-                    ? darkColors.text
-                    : lightColors.text,
-              }}
-            >
-              Message
-            </Text>
-          </TouchableOpacity>
+          <Animated.View
+            style={[
+              { width: screenWidth / TABS.length - 40 },
+              tabIndicatorStyle,
+            ]}
+            className="h-1 rounded-full bg-grey/50"
+          />
         </View>
       </View>
-    </View>
-  );
-
-  const renderTabs = () => (
-    <View className="bg-white/10">
-      <View className="flex-row">
-        {TABS.map((tab, index) => (
-          <TouchableOpacity
-            key={tab}
-            onPress={() => handleTabPress(tab, index)}
-            className="flex-1 items-center p-3"
-          >
-            <Text
-              className={`font-bold text-base`}
-              style={{
-                color:
-                  activeTab === tab
-                    ? effectiveTheme === "dark"
-                      ? darkColors.text
-                      : lightColors.text
-                    : effectiveTheme === "dark"
-                    ? darkColors.tertiaryText
-                    : lightColors.tertiaryText,
-              }}
-            >
-              {tab}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <Animated.View
-        style={[{ width: screenWidth / TABS.length - 40 }, tabIndicatorStyle]}
-        className="h-1 rounded-full bg-grey/50"
-      />
     </View>
   );
 
@@ -753,14 +773,15 @@ export default function SellerProfileScreen() {
 
   return (
     <SafeAreaView className="flex-1 ">
+      <StatusBar style="light" />
       <Stack.Screen
         options={{
           title: seller?.shopName || "Seller Profile",
           headerTitleAlign: "center",
+          headerShown: false,
         }}
       />
       {renderHeader()}
-      {renderTabs()}
       <View className="flex-1">{renderContent()}</View>
     </SafeAreaView>
   );

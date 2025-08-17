@@ -103,9 +103,13 @@ const OrderCard = React.memo(({ order }: { order: Order }) => {
   const handleLeaveReview = useCallback(() => {
     router.push({
       pathname: "/(customer)/account/orders/leave-review",
-      params: { orderId: order.id },
+      params: {
+        orderId: order.id,
+        productId: firstItem.pid,
+        sellerId: firstItem.sellerId,
+      },
     });
-  }, [router, order.id]);
+  }, [router, order.id, firstItem.pid, firstItem.sellerId]);
 
   return (
     <View className="bg-white p-4 rounded-lg border border-gray-200 mb-3 mx-4">

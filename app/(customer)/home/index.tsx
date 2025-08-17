@@ -16,7 +16,7 @@ import { useProducts } from "@/src/context/ProductContext";
 import { Product } from "@/src/constants/types.product";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/src/context/AuthContext";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTheme } from "@/src/context/ThemeContext";
 import { lightColors, darkColors } from "@/src/constants/Colors";
 import { ErrorState, ProductCardSkeleton } from "@/src/helpers/skeletons";
@@ -162,15 +162,7 @@ const ListFooter = ({
       </View>
     );
   }
-  if (!hasMore) {
-    return (
-      <View className="p-10 justify-center items-center">
-        <Text style={{ color: colors.tertiaryText }}>
-          You've reached the end!
-        </Text>
-      </View>
-    );
-  }
+
   return <View className="h-20" />;
 };
 
@@ -210,23 +202,6 @@ const ListFooter = ({
 //     </View>
 //   );
 // };
-
-import * as Location from "expo-location";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-
-const getUserLocation = async () => {
-  const { status } = await Location.requestForegroundPermissionsAsync();
-  if (status !== "granted") {
-    Alert.alert("Permission denied", "Location permission is required");
-    return null;
-  }
-
-  const location = await Location.getCurrentPositionAsync({});
-  return {
-    latitude: location.coords.latitude,
-    longitude: location.coords.longitude,
-  };
-};
 
 export default function CustomerHomeScreen() {
   const { products, loading, error, loadMoreProducts, hasMore, fetchProducts } =
@@ -321,11 +296,19 @@ export default function CustomerHomeScreen() {
             </View>
           ) : (
             <View className="flex-1 justify-center items-center mt-20 p-5">
-              <Ionicons
-                name="file-tray-outline"
-                size={50}
-                color={colors.tertiaryText}
-              />
+              <View
+                className="m-3  "
+                style={{
+                  backgroundColor:
+                    effectiveTheme === "dark"
+                      ? darkColors.accent + "30"
+                      : lightColors.accent + "30",
+                  padding: 20,
+                  borderRadius: 50,
+                }}
+              >
+                <Ionicons name="file-tray-outline" size={60} color="#557754" />
+              </View>
               <Text
                 style={{ color: colors.secondaryText }}
                 className="mt-4 text-center"
@@ -350,25 +333,4 @@ export default function CustomerHomeScreen() {
       />
     </View>
   );
-
-  // return (
-  //   <View className="bg-white">
-  //     <Text>Shop Location</Text>
-  //     <MapView
-  //       style={{ flex: 1, width: "100%", height: "100%" }}
-  //       initialRegion={{
-  //         latitude: -26.2041,
-  //         longitude: 28.0473,
-  //         latitudeDelta: 0.0922,
-  //         longitudeDelta: 0.0421,
-  //       }}
-  //     >
-  //       <Marker
-  //         coordinate={{ latitude: -26.2041, longitude: 28.0473 }}
-  //         title="Shop Location"
-  //         description="123 Main St, Johannesburg"
-  //       />
-  //     </MapView>
-  //   </View>
-  // );
 }

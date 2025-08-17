@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Animated,
+  Image,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -16,6 +17,7 @@ import { MenuItem } from "@/app/(seller)/account";
 import { useTheme } from "@/src/context/ThemeContext";
 import { darkColors, lightColors } from "@/src/constants/Colors";
 import { Theme } from "@/src/constants/types.user";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const ThemeToggle = () => {
   const { theme, setTheme, effectiveTheme } = useTheme();
@@ -185,8 +187,82 @@ export default function AccountScreen() {
     await signOut();
   };
 
+  const { top } = useSafeAreaInsets();
+
   return (
     <SafeAreaView className="flex-1 px-3">
+      <Stack.Screen
+        options={{
+          title: user?.fullName || "Account",
+          headerTitleStyle: {
+            color: darkColors.text,
+            fontFamily: "MuseoModerno_SemiBold",
+            fontSize: 22,
+          },
+
+          header: () => (
+            <View
+              className=" relative"
+              style={{
+                backgroundColor: "#557754",
+                height: top + 60,
+                marginBottom: 20,
+              }}
+            >
+              <View
+                style={{
+                  paddingTop: top,
+                  paddingInline: 16,
+                  paddingBottom: 36,
+                  zIndex: 20,
+                }}
+              >
+                <View className="flex-row items-center justify-start gap-4">
+                  {user?.photoURL ? (
+                    <Image
+                      source={{ uri: user?.photoURL }}
+                      className="w-12 h-12 rounded-full"
+                      style={{ resizeMode: "contain" }}
+                    />
+                  ) : (
+                    <MaterialCommunityIcons
+                      name="account-circle-outline"
+                      size={48}
+                      color="#fff"
+                    />
+                  )}
+                  <View className="flex-col items-start  mb-2">
+                    <Text
+                      className="text-heading font-MuseoModerno_SemiBold"
+                      style={{ color: "#fff" }}
+                    >
+                      {user?.fullName || "Account"}
+                    </Text>
+
+                    <Text
+                      className="text-medium font-MuseoModerno_Medium"
+                      style={{ color: "#ffffff80" }}
+                    >
+                      {user?.email}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: -20,
+                  height: 40,
+                  width: "100%",
+                  backgroundColor: "#557754",
+                  flexDirection: "row",
+                  borderRadius: 1000,
+                }}
+              />
+            </View>
+          ),
+        }}
+      />
       <ScrollView>
         <View
           className="my-4 overflow-hidden rounded-2xl gap-y-0.5 border"

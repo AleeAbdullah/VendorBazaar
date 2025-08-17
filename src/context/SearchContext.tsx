@@ -115,6 +115,7 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
           type: "websearch",
           config: "english",
         })
+        .or("deleted.is.null,deleted.eq.false")
         .limit(20);
 
       if (searchError) throw searchError;

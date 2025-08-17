@@ -34,7 +34,12 @@ export default function OnboardingScreen() {
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-1 p-6 h-screen w-screen">
         <View className="items-center justify-start h-[78%] relative ">
-          <Text className="text-[64px] font-bold text-black mb-4 text-start">
+          <Text
+            className="text-[60px] font-Fredoka_SemiBold text-[#063e2a] mb-4 text-start"
+            style={{
+              lineHeight: Platform.OS === "ios" ? 70 : 60,
+            }}
+          >
             Find everything at one place
           </Text>
           <View className="w-full absolute bottom-0 opacity-90 -z-10">

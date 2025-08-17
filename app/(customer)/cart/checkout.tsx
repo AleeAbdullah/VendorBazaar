@@ -49,7 +49,8 @@ const CheckoutItem = ({
 
 export default function CheckoutScreen() {
   const router = useRouter();
-  const { cartItems, cartSubtotal, initiatePayment, isPaying } = useCart();
+  const { cartItems, cartSubtotal, initiatePayment, isPaying, SHIPPING_FEE } =
+    useCart();
   const { user } = useAuth();
   const { effectiveTheme } = useTheme();
   const colors = effectiveTheme === "dark" ? darkColors : lightColors;
@@ -66,7 +67,6 @@ export default function CheckoutScreen() {
     setSelectedAddress(defaultAddress);
   }, [user]);
 
-  const SHIPPING_FEE = 80.0;
   const VAT_RATE = 0.0;
   const total = cartSubtotal * (1 + VAT_RATE) + SHIPPING_FEE;
 

@@ -14,7 +14,7 @@ import {
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/context/AuthContext";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
@@ -78,9 +78,21 @@ export default function ForgotPasswordScreen() {
           <View className="h-full justify-between items-center px-6 py-5">
             {message?.type == "Success" ? (
               <View className="w-full flex flex-1 items-center justify-center gap-5">
-                <Ionicons name="checkmark-done" size={90} color="#0B6623" />
                 <View className={`w-full p-3 rounded-lg mb-4 `}>
-                  <Text className={`text-hero text-black mb-4`}>
+                  <View
+                    className="p-4 bg-primary mb-4 w-fit "
+                    style={{ borderRadius: 400, alignSelf: "center" }}
+                  >
+                    <MaterialCommunityIcons
+                      name="email-check"
+                      size={90}
+                      color="#fff"
+                    />
+                  </View>
+
+                  <Text
+                    className={`text-hero text-black font-MuseoModerno_SemiBold mb-4`}
+                  >
                     Check Your Mail
                   </Text>
                   <Text className={`text-btn_title text-black mb-32`}>
@@ -90,16 +102,16 @@ export default function ForgotPasswordScreen() {
               </View>
             ) : (
               <View className="justify-between items-center">
-                <Ionicons
-                  name="key-outline"
-                  size={70}
-                  color="#0B6623"
-                  className="mb-5"
-                />
-                <View className="w-full ">
-                  <Text className="text-center text-hero font-bold text-black mb-3 ">
-                    Forgot password?
-                  </Text>
+                <View className="w-full">
+                  <View className="w-full flex flex-row items-center justify-center mb-6">
+                    <Text
+                      className="text-center font-MuseoModerno_Medium text-black mb-3 "
+                      style={{ fontSize: 36 }}
+                    >
+                      Forgot password?
+                    </Text>
+                  </View>
+
                   <Text className="text-start text-medium text-gray-500 mb-8 px-4 leading-relaxed">
                     Enter your email for the verification process and we'll send
                     you a link to reset your password.
@@ -110,7 +122,7 @@ export default function ForgotPasswordScreen() {
                     </Text>
 
                     <TextInput
-                      className="w-full h-14 bg-gray-50 border border-gray-300 rounded-lg px-4 mb-6 text-medium  text-gray-800 focus:border-primary"
+                      className="w-full h-14 bg-gray-50 border border-gray-300 rounded-full px-4 mb-6 text-medium  text-gray-800 focus:border-primary"
                       placeholder="Enter your registered email"
                       value={email}
                       onChangeText={setEmail}

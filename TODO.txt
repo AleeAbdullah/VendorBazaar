@@ -5,8 +5,9 @@ For development in a custom "development build".
 For your final production/release app built with EAS.
 You need to add the SHA-1 for each environment you test and release with to your Firebase project settings.
 
+--------------------------
 
-
+The read count will be equal to the total number of users on your platform. add better mechanism.
 
 ---------------------------
 
@@ -17,9 +18,6 @@ Authorized redirect URIs google auth
 
 ---------------
 
-
-
-
 maybe add discounts
 
 Creating a personalized "For You" feed
@@ -27,9 +25,6 @@ Creating a personalized "For You" feed
 ------------------
 
 always use serverTimestamp() when creating a new product document
-
-
-
 
 ------------------------------
 

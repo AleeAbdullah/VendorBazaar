@@ -59,6 +59,7 @@ export function SellerProductProvider({
         .from("products")
         .select("*")
         .eq("seller_id", user.uid)
+        .or("deleted.is.null,deleted.eq.false")
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;

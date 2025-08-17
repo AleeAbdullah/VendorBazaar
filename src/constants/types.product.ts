@@ -58,7 +58,7 @@ export interface Review {
   userId: string;
   rating: number;
   userName: string;
-  text: string;
+  reviewText: string;
   createdAt: Timestamp;
   // ImageUrls: string[];
   id: string;

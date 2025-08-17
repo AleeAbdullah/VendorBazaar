@@ -186,7 +186,7 @@ export function SellerDashboardProvider({
           id: doc.id,
           type: "review" as const,
           title: `${reviewData.userName} left a ${reviewData.rating}-star review`,
-          subtitle: `"${reviewData.text.substring(0, 40)}..."`,
+          subtitle: `"${reviewData.reviewText.substring(0, 40)}..."`,
           createdAt: reviewData.createdAt,
         };
       });

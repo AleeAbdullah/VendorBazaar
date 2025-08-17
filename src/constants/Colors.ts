@@ -22,7 +22,7 @@ export const lightColors: ColorPalette = {
   tertiaryText: "#a1a1aa",
   placeholder: "#a1a1aa",
   border: "#e4e4e7",
-  accent: "#0b6623",
+  accent: "#557754",
   headerBackground: "#ffffff",
   headerText: "#18181b",
 };
@@ -36,7 +36,7 @@ export const darkColors: ColorPalette = {
   tertiaryText: "#a1a1aa",
   placeholder: "#71717a",
   border: "#4b5563",
-  accent: "#0b6623",
+  accent: "#557754",
   headerBackground: "#3f3f46",
   headerText: "#f4f4f5",
 };

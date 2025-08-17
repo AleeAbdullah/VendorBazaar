@@ -1,29 +1,28 @@
-import { View, Image } from "react-native";
+import { View, Image, Text } from "react-native";
 import React from "react";
 import Svg, { Path } from "react-native-svg";
 import Spinner from "../components/spinner";
-import CustomText from "../components/Text";
 import { StatusBar } from "expo-status-bar";
 
 const LoadingScreen = () => {
   return (
     <View className="w-screen h-screen flex items-center justify-center bg-primary relative ">
-      <StatusBar style="light" backgroundColor="transparent" translucent />
+      <StatusBar style="light" backgroundColor="#000" />
       <Image
         source={require("@/assets/images/loading.png")}
         className="absolute top-0 w-full h-full"
       />
-      <View className="h-1/2 items-center mb-12">
-        <CustomText className="text-[64px] font-semibold leading-none text-white ">
+      <View className="h-[120px] items-center mb-12">
+        <Text className="text-hero font-MuseoModerno_SemiBold leading-none text-white ">
           SAFE BUY
-        </CustomText>
-        <CustomText className="text-[64px] font-semibold leading-none text-white ">
+        </Text>
+        <Text className="text-hero font-MuseoModerno_SemiBold leading-none text-white ">
           AFRICA
-        </CustomText>
+        </Text>
       </View>
 
-      <View className=" items-center justify-center h-36">
-        <Spinner />
+      <View className=" items-center justify-center h-[100px] mt-6">
+        <Spinner size={50} />
       </View>
     </View>
   );

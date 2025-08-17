@@ -180,8 +180,8 @@ const OrderCard = React.memo(
                   className={`px-4 py-1 border rounded-lg`}
                   style={{
                     backgroundColor: isCompleted
-                      ? `${colors.accent}90`
-                      : `${colors.accent}90`,
+                      ? `${colors.accent}`
+                      : `${colors.accent}`,
                     borderColor: colors.accent,
                   }}
                 >
@@ -189,7 +189,9 @@ const OrderCard = React.memo(
                     className={`text-medium font-MuseoModerno_Bold capitalize`}
                     style={{
                       color:
-                        effectiveTheme === "dark" ? colors.text : colors.text,
+                        effectiveTheme === "dark"
+                          ? darkColors.text
+                          : darkColors.text,
                     }}
                   >
                     Leave a Review
@@ -206,9 +208,7 @@ const OrderCard = React.memo(
                 }}
                 className={`px-4 py-1 border rounded-lg`}
                 style={{
-                  backgroundColor: isCompleted
-                    ? `${colors.accent}90`
-                    : `${colors.accent}90`,
+                  backgroundColor: "#557754",
                   borderColor: colors.accent,
                 }}
               >
@@ -216,7 +216,9 @@ const OrderCard = React.memo(
                   className={`text-medium font-MuseoModerno_Bold capitalize`}
                   style={{
                     color:
-                      effectiveTheme === "dark" ? colors.text : colors.text,
+                      effectiveTheme === "dark"
+                        ? darkColors.text
+                        : darkColors.text,
                   }}
                 >
                   Track Order
@@ -338,7 +340,7 @@ export default function MyOrdersScreen() {
     >
       <View
         className="flex-row p-1 rounded-full mx-4 my-2"
-        style={{ backgroundColor: colors.card }}
+        style={{ backgroundColor: colors.card + "90" }}
         onLayout={onContainerLayout}
       >
         {containerWidth > 0 && (
@@ -351,7 +353,7 @@ export default function MyOrdersScreen() {
                 bottom: 2,
                 borderRadius: 9999,
                 width: tabWidth,
-                backgroundColor: colors.background,
+                backgroundColor: colors.accent,
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.1,
@@ -371,7 +373,9 @@ export default function MyOrdersScreen() {
             className="font-MuseoModerno_SemiBold"
             style={{
               color:
-                activeTab === "Ongoing" ? colors.text : colors.secondaryText,
+                activeTab === "Ongoing"
+                  ? darkColors.text
+                  : colors.secondaryText,
             }}
           >
             Ongoing ({ongoingOrders.length})
@@ -386,7 +390,9 @@ export default function MyOrdersScreen() {
             className="font-MuseoModerno_SemiBold"
             style={{
               color:
-                activeTab === "Completed" ? colors.text : colors.secondaryText,
+                activeTab === "Completed"
+                  ? darkColors.text
+                  : colors.secondaryText,
             }}
           >
             Completed ({completedOrders.length})

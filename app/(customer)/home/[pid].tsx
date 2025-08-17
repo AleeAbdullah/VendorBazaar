@@ -107,7 +107,7 @@ const ReviewCard = ({
             : lightColors.secondaryText,
       }}
     >
-      {review.text}
+      {review.reviewtText}
     </Text>
     <Text className="text-xs text-gray-400 mt-3 text-right">
       {new Date(review.createdAt.seconds * 1000).toLocaleDateString()}
@@ -729,8 +729,6 @@ export default function ProductDetailsScreen() {
             : lightColors.background,
       }}
     >
-      <StatusBar style="light" />
-
       <Animated.FlatList
         data={activeTab === "Reviews" ? reviews : []}
         renderItem={({ item }) => (

@@ -9,8 +9,11 @@ import {
   FlatList,
   Image,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { Stack, useRouter } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useSellerDashboard } from "@/src/context/seller/SellerDashboardContext";
 import { useAuth } from "@/src/context/AuthContext";
@@ -21,6 +24,7 @@ import { formatTimestamp } from "@/src/helpers/formatDate";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { Seller } from "@/src/constants/types.seller";
+import MessagesIcon from "@/src/components/MessagesIcon";
 
 // Metric Card Component with proper theming
 const MetricCard = ({
@@ -166,6 +170,7 @@ export default function SellerDashboard() {
   const { effectiveTheme } = useTheme();
   const [sellerProfile, setSellerProfile] = useState<Seller | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const { top } = useSafeAreaInsets();
 
   // console.log(metrics);
   // console.log(activities);
@@ -246,6 +251,58 @@ export default function SellerDashboard() {
     // >
     <>
       <StatusBar style={effectiveTheme === "dark" ? "light" : "dark"} />
+      <Stack.Screen
+        options={{
+          title: "Dashboard",
+
+          header: () => (
+            <View
+              className=" relative"
+              style={{
+                backgroundColor: "#557754",
+                height: top + 40,
+                marginBottom: 20,
+                zIndex: 10,
+              }}
+            >
+              <View
+                className="flex-row items-center justify-between"
+                style={{
+                  paddingTop: top,
+                  paddingInline: 16,
+                  paddingBottom: 36,
+                  zIndex: 1000,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    fontFamily: "MuseoModerno_SemiBold",
+                    fontSize: 28,
+                    height: 36,
+                    zIndex: 100,
+                  }}
+                >
+                  Dashboard
+                </Text>
+                <MessagesIcon color="white" />
+              </View>
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: -20,
+                  height: 30,
+                  width: "100%",
+                  backgroundColor: "#557754",
+                  flexDirection: "row",
+                  borderRadius: 1000,
+                  zIndex: -10,
+                }}
+              />
+            </View>
+          ),
+        }}
+      />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header Section */}
         <View className="px-5 py-6">

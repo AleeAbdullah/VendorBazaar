@@ -28,6 +28,7 @@ import { darkColors, lightColors } from "@/src/constants/Colors";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import { ToastProvider } from "@/src/context/ToastContext";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -248,19 +249,21 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <ThemeProvider>
-            <MessagingProvider>
-              <NotificationProvider>
-                <SearchProvider>
-                  <OrderProvider>
-                    <RootLayoutNav />
-                  </OrderProvider>
-                </SearchProvider>
-              </NotificationProvider>
-            </MessagingProvider>
-          </ThemeProvider>
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <MessagingProvider>
+                <NotificationProvider>
+                  <SearchProvider>
+                    <OrderProvider>
+                      <RootLayoutNav />
+                    </OrderProvider>
+                  </SearchProvider>
+                </NotificationProvider>
+              </MessagingProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </ToastProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

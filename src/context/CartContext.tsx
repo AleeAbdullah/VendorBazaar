@@ -22,6 +22,7 @@ import { Address } from "../constants/types.user";
 interface CartContextType {
   cartItems: CartItem[];
   loading: boolean;
+  SHIPPING_FEE: number;
   error: string | null;
   isPaying: boolean;
   addToCart: (
@@ -44,6 +45,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
 
+  const SHIPPING_FEE = 0.0;
   const { firebaseUser } = useAuth();
 
   const initiatePayment = async ({
@@ -210,6 +212,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const value: CartContextType = {
     cartItems,
     loading,
+    SHIPPING_FEE,
     isPaying,
     error,
     addToCart,
